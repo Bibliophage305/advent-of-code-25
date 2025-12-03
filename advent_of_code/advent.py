@@ -1,6 +1,8 @@
+from advent_of_code import api
+
 class Advent:
 
-    test_data_paths = ["test", "test"]
+    test_data_paths = ["test_data", "test_data"]
 
     def __init__(self, day):
         self.day = day
@@ -57,11 +59,17 @@ class Advent:
             )
 
     def _run_solution(self, part):
-        data = self._get_data(f"advent_of_code/{self.day}/input")
-        print(f"Part {part}: {getattr(self, f'part_{part}')(*data)}")
+        data = self._get_data(f"advent_of_code/{self.day}/input_data")
+        return getattr(self, f'part_{part}')(*data)
 
 
     def run(self):
+        try:
+            levels_solved = api.number_of_parts_solved(self.day)
+            attempt_submit = True
+        except Exception as e:
+            attempt_submit = False
+
         for part in (1, 2):
             try:
                 self._run_test(part)
@@ -71,6 +79,12 @@ class Advent:
             except Exception as e:
                 raise Exception(f"Failed when running tests for part {part}") from e
             try:
-                self._run_solution(part)
+                solution = self._run_solution(part)
+                print(f"Part {part}: {solution}")
+                if attempt_submit and levels_solved < part:
+                    try:
+                        api.submit_solution(self.day, part, solution)
+                    except Exception as e:
+                        raise Exception(f"Could not submit solution for part {part}") from e
             except Exception as e:
                 raise Exception(f"Could not run part {part}") from e

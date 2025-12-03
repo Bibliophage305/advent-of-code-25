@@ -1,57 +1,16 @@
 import argparse
 import importlib
 import pathlib
-import requests
-from functools import cache
-from bs4 import BeautifulSoup
 import os
 from datetime import datetime, date, UTC
 from pytz import timezone
 from dotenv import load_dotenv
 
+from advent_of_code import api
+
 load_dotenv()
 
 YEAR = os.getenv("YEAR", datetime.now().year)
-
-def _fetch_url(day, parts):
-    if not os.getenv("TOKEN"):
-        raise ValueError("No token found. Please set the TOKEN environment variable")
-    url = f"https://adventofcode.com/{int(YEAR)}/day/{day}"
-    for part in parts:
-        url += f"/{part}"
-    return requests.get(url, headers={"Cookie": f"session={os.getenv('TOKEN')}"})
-
-
-def _get_input(day):
-    response = _fetch_url(day, ["input"])
-
-    if response.status_code == 200:
-        return response.text.strip()
-    else:
-        print(
-            f"Failed to retrieve input for day {day}. Status code: {response.status_code}"
-        )
-        return ""
-
-
-@cache
-def _get_html_content(day):
-    return _fetch_url(day, []).text
-
-
-def _get_test_data(day):
-    soup = BeautifulSoup(_get_html_content(day), "html.parser")
-    largest_code_tag = max(soup.find_all("code"), key=lambda tag: len(tag.get_text()))
-    return largest_code_tag.get_text().strip() if largest_code_tag else ""
-
-
-def _get_test_solution(day):
-    soup = BeautifulSoup(_get_html_content(day), "html.parser")
-    code_tags = soup.find_all("code")
-    for code_tag in reversed(code_tags):
-        if code_tag.em and code_tag.em.string:
-            return code_tag.em.string.strip()
-    return None
 
 
 def _get_day_from_args():
@@ -117,7 +76,7 @@ def _create_day(day, skip_overwrite=False):
 
 
 class Solver(advent.Advent):
-    part_1_test_solution = {_get_test_solution(day)}
+    part_1_test_solution = {api.get_test_solution(day)}
     part_2_test_solution = None
 
     def process_data(self, data):
@@ -129,10 +88,9 @@ class Solver(advent.Advent):
     def part_2(self, data):
         pass
 """,
-        filename_prefix + "test": _get_test_data(day),
-        filename_prefix + "input": _get_input(day),
+        filename_prefix + "test_data": api.get_test_data(day),
+        filename_prefix + "input_data": api.get_input(day),
     }
-    _get_test_data(day)
     for filename, default_content in filenames.items():
         if pathlib.Path(filename).is_file():
             if skip_overwrite:
