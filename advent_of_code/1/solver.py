@@ -1,4 +1,4 @@
-from advent_of_code import advent
+import advent
 from itertools import chain, accumulate
 
 

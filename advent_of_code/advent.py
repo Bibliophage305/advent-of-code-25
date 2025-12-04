@@ -1,4 +1,4 @@
-from advent_of_code import api
+import api
 
 class Advent:
 

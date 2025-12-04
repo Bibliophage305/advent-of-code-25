@@ -1,24 +1,17 @@
-[tool.poetry]
-name = "advent_of_code"
+[project]
+name = "advent-of-code-25"
 version = "0.1.0"
-description = ""
-authors = ["Chris <christopher.hampson58@gmail.com>"]
+description = "Add your description here"
 readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "dotenv>=0.9.9",
+    "pytz>=2025.2",
+    "requests>=2.32.5",
+    "taskipy>=1.14.1",
+]
 
-
-[tool.poetry.dependencies]
-python = "^3.12"
-requests = "^2.32.3"
-beautifulsoup4 = "^4.12.3"
-pytz = "^2024.2"
-dotenv = "^0.9.9"
-
-
-[tool.poetry.scripts]
-create = "advent_of_code.manage:create"
-day = "advent_of_code.manage:run"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.taskipy.tasks]
+create = "python3 advent_of_code/create.py"
+day = "python3 advent_of_code/run.py"

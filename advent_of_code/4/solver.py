@@ -1,5 +1,5 @@
 from itertools import product
-from advent_of_code import advent
+import advent
 
 
 class Solver(advent.Advent):

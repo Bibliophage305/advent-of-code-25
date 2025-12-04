@@ -6,7 +6,7 @@ from datetime import datetime, date, UTC
 from pytz import timezone
 from dotenv import load_dotenv
 
-from advent_of_code import api
+import api
 
 load_dotenv()
 
@@ -14,7 +14,7 @@ YEAR = os.getenv("YEAR", datetime.now().year)
 MAX_DAYS = int(os.getenv("MAX_DAYS", 25))
 
 
-def _get_day_from_args():
+def get_day_from_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("day", nargs="?")
     args = parser.parse_args()
@@ -112,25 +112,20 @@ class Solver(advent.Advent):
             f.write(default_content)
 
 
-def create():
-    day = _get_day_from_args()
+def create(day=None):
     if day is None:
         for day in range(1, MAX_DAYS + 1):
             _create_day(str(day), skip_overwrite=True)
-        return
-    try:
-        day = _get_day_from_args()
-    except ValueError as e:
-        print(e)
         return
     _create_day(day)
 
 
 def _run_day(day):
     try:
-        module = importlib.import_module(f"advent_of_code.{day}.solver")
+        module = importlib.import_module(f"{day}.solver")
     except ModuleNotFoundError as e:
         print(f"Day {day} hasn't been created yet")
+        print(e)
         return
     parts_solved = api.number_of_parts_solved(int(day))
     for part in (1, 2):
@@ -151,17 +146,11 @@ def _run_day(day):
     s.run()
 
 
-def run():
-    day = _get_day_from_args()
+def run(day=None):
     if day is None:
         for day in range(1, MAX_DAYS + 1):
             print(f"Day {day}")
             _run_day(str(day))
             print()
-        return
-    try:
-        day = _get_day_from_args()
-    except ValueError as e:
-        print(e)
         return
     _run_day(day)

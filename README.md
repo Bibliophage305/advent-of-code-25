@@ -6,17 +6,17 @@ Solutions and tools for [Advent of Code 2025](https://adventofcode.com/2025), in
 
 Before running for the first time, install the dependencies:
 ```bash
-poetry install
+uv install
 ```
 
 To start a new day:
 ```bash
-poetry run create {day}
+uv run task create {day}
 ```
 
 To run the solution for a day:
 ```bash
-poetry run day {day}
+uv run task day {day}
 Part 1: 1234
 Part 2: 5678
 ```
