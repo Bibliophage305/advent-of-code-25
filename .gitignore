@@ -1,3 +1,6 @@
+# advent of code data unique to each user
+input_data
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
