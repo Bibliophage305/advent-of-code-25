@@ -125,7 +125,6 @@ def _run_day(day):
         module = importlib.import_module(f"{day}.solver")
     except ModuleNotFoundError as e:
         print(f"Day {day} hasn't been created yet")
-        print(e)
         return
     parts_solved = api.number_of_parts_solved(int(day))
     for part in (1, 2):
