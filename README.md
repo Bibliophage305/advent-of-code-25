@@ -4,10 +4,7 @@ Solutions and tools for [Advent of Code 2025](https://adventofcode.com/2025), in
 
 ## Usage
 
-Before running for the first time, install the dependencies:
-```bash
-uv install
-```
+To use automated data retrieval and solution submission, populate .env with your session cookie from Advent of Code.
 
 To start a new day:
 ```bash
