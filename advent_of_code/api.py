@@ -9,6 +9,7 @@ load_dotenv()
 
 YEAR = os.getenv("YEAR", datetime.now().year)
 
+
 def _fetch_url(day, parts, method="GET", data=None):
     if not os.getenv("TOKEN"):
         raise ValueError("No token found. Please set the TOKEN environment variable")
@@ -25,8 +26,10 @@ def _fetch_url(day, parts, method="GET", data=None):
     else:
         raise ValueError("Unsupported HTTP method")
 
+
 def _get_html_content(day):
     return _fetch_url(day, []).text
+
 
 def get_input(day):
     response = _fetch_url(day, ["input"])
@@ -39,11 +42,15 @@ def get_input(day):
         )
         return ""
 
+
 def get_test_data(day):
     soup = BeautifulSoup(_get_html_content(day), "html.parser")
     article = soup.find("article")
-    largest_code_tag = max(article.find_all("code"), key=lambda tag: len(tag.get_text()))
+    largest_code_tag = max(
+        article.find_all("code"), key=lambda tag: len(tag.get_text())
+    )
     return largest_code_tag.get_text().strip() if largest_code_tag else ""
+
 
 def get_test_solution(day, part):
     if part not in [1, 2]:
@@ -51,13 +58,16 @@ def get_test_solution(day, part):
     soup = BeautifulSoup(_get_html_content(day), "html.parser")
     articles = soup.find_all("article")
     if part > len(articles):
-        print(f"No test solution found for part {part} yet, have you completed the previous part?")
+        print(
+            f"No test solution found for part {part} yet, have you completed the previous part?"
+        )
         return ""
     code_tags = articles[part - 1].find_all("code")
     for code_tag in reversed(code_tags):
         if code_tag.em and code_tag.em.string:
             return code_tag.em.string.strip()
     return ""
+
 
 def number_of_parts_solved(day):
     soup = BeautifulSoup(_get_html_content(day), "html.parser")
@@ -69,6 +79,7 @@ def number_of_parts_solved(day):
         raise ValueError("Could not find level input in submission form")
     level = input_level_element.get("value")
     return int(level) - 1
+
 
 def submit_solution(day, level, solution):
     if level not in [1, 2]:
@@ -88,10 +99,14 @@ def submit_solution(day, level, solution):
     if message_text.startswith("You gave an answer too recently"):
         timeout_remaining = re.search(r"(?<=You have ).+(?= left)", message_text)
         timeout_message = timeout_remaining.group(0) if timeout_remaining else "a while"
-        print(f"Currently in a cooldown period. Please wait {timeout_message} before trying again.")
+        print(
+            f"Currently in a cooldown period. Please wait {timeout_message} before trying again."
+        )
         return
     elif message_text.startswith("That's not the right answer"):
-        timeout_remaining = re.search(r"(?<=lease wait ).+(?= before trying again)", message_text)
+        timeout_remaining = re.search(
+            r"(?<=lease wait ).+(?= before trying again)", message_text
+        )
         timeout_message = timeout_remaining.group(0) if timeout_remaining else "a while"
         print(f"Incorrect solution. Please wait {timeout_message} before trying again.")
         return
@@ -103,6 +118,7 @@ def submit_solution(day, level, solution):
         return
     print("Unexpected response when submitting solution:")
     print(response.text)
+
 
 if __name__ == "__main__":
     day = 4

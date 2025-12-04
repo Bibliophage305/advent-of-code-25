@@ -131,9 +131,7 @@ def _run_day(day):
         if part == 2 and parts_solved == 0:
             continue
         filename = f"advent_of_code/{day}/test_solution_{part}"
-        if os.path.isfile(
-            filename
-        ):
+        if os.path.isfile(filename):
             with open(filename, "r") as f:
                 content = f.read().strip()
                 if content:

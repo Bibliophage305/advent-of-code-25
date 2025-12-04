@@ -1,5 +1,6 @@
 import api
 
+
 class Advent:
 
     test_data_paths = ["test_data", "test_data"]
@@ -28,8 +29,10 @@ class Advent:
         return self.process_data(data)
 
     def _run_test(self, part):
-        f = getattr(self, f'part_{part}')
-        with open(f"advent_of_code/{self.day}/test_solution_{part}", "r") as test_solution_file:
+        f = getattr(self, f"part_{part}")
+        with open(
+            f"advent_of_code/{self.day}/test_solution_{part}", "r"
+        ) as test_solution_file:
             expected_solution = int(test_solution_file.read().strip())
         data = self._get_data(
             f"advent_of_code/{self.day}/{self.test_data_paths[part-1]}"
@@ -55,8 +58,7 @@ class Advent:
 
     def _run_solution(self, part):
         data = self._get_data(f"advent_of_code/{self.day}/input_data")
-        return getattr(self, f'part_{part}')(*data)
-
+        return getattr(self, f"part_{part}")(*data)
 
     def run(self):
         try:
@@ -80,6 +82,8 @@ class Advent:
                     try:
                         api.submit_solution(self.day, part, solution)
                     except Exception as e:
-                        raise Exception(f"Could not submit solution for part {part}") from e
+                        raise Exception(
+                            f"Could not submit solution for part {part}"
+                        ) from e
             except Exception as e:
                 raise Exception(f"Could not run part {part}") from e

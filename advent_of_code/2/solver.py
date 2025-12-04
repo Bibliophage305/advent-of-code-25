@@ -3,8 +3,13 @@ import advent
 
 class Solver(advent.Advent):
     def process_data(self, data):
-        return [[list(map(int, s.split("-"))) for s in "".join(x.strip() for x in data).split(",")]]
-    
+        return [
+            [
+                list(map(int, s.split("-")))
+                for s in "".join(x.strip() for x in data).split(",")
+            ]
+        ]
+
     def count_bad_ids(self, data, min_chunk_size):
         total = 0
         for start, end in data:
@@ -14,9 +19,7 @@ class Solver(advent.Advent):
                 for chunk_size in range(min_chunk_size(l), l // 2 + 1):
                     if l % chunk_size != 0:
                         continue
-                    chunks = {
-                        s[j : j + chunk_size] for j in range(0, l, chunk_size)
-                    }
+                    chunks = {s[j : j + chunk_size] for j in range(0, l, chunk_size)}
                     if len(chunks) == 1:
                         total += i
                         break
