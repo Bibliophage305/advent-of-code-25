@@ -11,6 +11,7 @@ from advent_of_code import api
 load_dotenv()
 
 YEAR = os.getenv("YEAR", datetime.now().year)
+MAX_DAYS = int(os.getenv("MAX_DAYS", 25))
 
 
 def _get_day_from_args():
@@ -18,8 +19,8 @@ def _get_day_from_args():
     parser.add_argument("day", nargs="?")
     args = parser.parse_args()
     day = args.day
-    if day is not None and day not in map(str, range(1, 26)):
-        raise ValueError("Day must be a number between 1 and 25")
+    if day is not None and day not in map(str, range(1, MAX_DAYS + 1)):
+        raise ValueError(f"Day must be a number between 1 and {MAX_DAYS}")
     return day
 
 
@@ -76,9 +77,6 @@ def _create_day(day, skip_overwrite=False):
 
 
 class Solver(advent.Advent):
-    part_1_test_solution = {api.get_test_solution(day)}
-    part_2_test_solution = None
-
     def process_data(self, data):
         return [data]
 
@@ -133,6 +131,21 @@ def _run_day(day):
     except ModuleNotFoundError as e:
         print(f"Day {day} hasn't been created yet")
         return
+    parts_solved = api.number_of_parts_solved(int(day))
+    for part in (1, 2):
+        if part == 2 and parts_solved == 0:
+            continue
+        filename = f"advent_of_code/{day}/test_solution_{part}"
+        if os.path.isfile(
+            filename
+        ):
+            with open(filename, "r") as f:
+                content = f.read().strip()
+                if content:
+                    continue
+        with open(filename, "w") as f:
+            test_solution = api.get_test_solution(int(day), part)
+            f.write(str(test_solution))
     s = module.Solver(day)
     s.run()
 
@@ -140,7 +153,7 @@ def _run_day(day):
 def run():
     day = _get_day_from_args()
     if day is None:
-        for day in range(1, 26):
+        for day in range(1, MAX_DAYS + 1):
             print(f"Day {day}")
             _run_day(str(day))
             print()

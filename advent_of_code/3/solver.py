@@ -2,9 +2,6 @@ from advent_of_code import advent
 
 
 class Solver(advent.Advent):
-    part_1_test_solution = 357
-    part_2_test_solution = 3121910778619
-
     def process_data(self, data):
         return [[x.strip() for x in data]]
     

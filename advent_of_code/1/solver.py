@@ -3,9 +3,6 @@ from itertools import chain, accumulate
 
 
 class Solver(advent.Advent):
-    part_1_test_solution = 3
-    part_2_test_solution = 6
-
     def process_data(self, data):
         return [[int(x.strip()[1:]) if x.strip()[0] == "R" else -int(x.strip()[1:]) for x in data]]
     

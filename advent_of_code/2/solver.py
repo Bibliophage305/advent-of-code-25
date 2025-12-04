@@ -2,9 +2,6 @@ from advent_of_code import advent
 
 
 class Solver(advent.Advent):
-    part_1_test_solution = 1227775554
-    part_2_test_solution = 4174379265
-
     def process_data(self, data):
         return [[list(map(int, s.split("-"))) for s in "".join(x.strip() for x in data).split(",")]]
     

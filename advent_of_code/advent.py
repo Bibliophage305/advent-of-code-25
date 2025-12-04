@@ -10,12 +10,6 @@ class Advent:
     def process_data(self, data):
         return [data]
 
-    def part_1_test_solution(self):
-        raise ValueError
-
-    def part_2_test_solution(self):
-        raise ValueError
-
     def part_1(self, *data):
         raise NotImplementedError
 
@@ -35,13 +29,14 @@ class Advent:
 
     def _run_test(self, part):
         f = getattr(self, f'part_{part}')
-        expected_solution = getattr(self, f'part_{part}_test_solution')
+        with open(f"advent_of_code/{self.day}/test_solution_{part}", "r") as test_solution_file:
+            expected_solution = int(test_solution_file.read().strip())
         data = self._get_data(
             f"advent_of_code/{self.day}/{self.test_data_paths[part-1]}"
         )
-        if expected_solution is None:
+        if not expected_solution:
             raise AssertionError(
-                f"Test for part {part} failed\nExpected solution cannot be None"
+                f"Test for part {part} failed\nExpected solution cannot be empty"
             )
         try:
             solution = f(*data)

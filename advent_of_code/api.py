@@ -44,13 +44,19 @@ def get_test_data(day):
     largest_code_tag = max(soup.find_all("code"), key=lambda tag: len(tag.get_text()))
     return largest_code_tag.get_text().strip() if largest_code_tag else ""
 
-def get_test_solution(day):
+def get_test_solution(day, part):
+    if part not in [1, 2]:
+        raise ValueError("Part must be 1 or 2")
     soup = BeautifulSoup(_get_html_content(day), "html.parser")
-    code_tags = soup.find_all("code")
+    articles = soup.find_all("article")
+    if part > len(articles):
+        print(f"No test solution found for part {part} yet, have you completed the previous part?")
+        return ""
+    code_tags = articles[part - 1].find_all("code")
     for code_tag in reversed(code_tags):
         if code_tag.em and code_tag.em.string:
             return code_tag.em.string.strip()
-    return None
+    return ""
 
 def number_of_parts_solved(day):
     soup = BeautifulSoup(_get_html_content(day), "html.parser")
@@ -98,7 +104,6 @@ def submit_solution(day, level, solution):
     print(response.text)
 
 if __name__ == "__main__":
-    day = 2
-    answer = 5
-    submit_solution(day, 1, answer)
-    # print(number_of_parts_solved(day))
+    day = 4
+    part = 2
+    print(get_test_solution(day, part))
