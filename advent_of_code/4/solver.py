@@ -3,9 +3,6 @@ from advent_of_code import advent
 
 
 class Solver(advent.Advent):
-    part_1_test_solution = 13
-    part_2_test_solution = 43
-
     def process_data(self, data):
         return [{p for p in product(range(len(data)), range(len(data[0].strip()))) if data[p[0]][p[1]] == "@"}]
     

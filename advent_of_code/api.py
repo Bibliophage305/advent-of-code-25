@@ -41,7 +41,8 @@ def get_input(day):
 
 def get_test_data(day):
     soup = BeautifulSoup(_get_html_content(day), "html.parser")
-    largest_code_tag = max(soup.find_all("code"), key=lambda tag: len(tag.get_text()))
+    article = soup.find("article")
+    largest_code_tag = max(article.find_all("code"), key=lambda tag: len(tag.get_text()))
     return largest_code_tag.get_text().strip() if largest_code_tag else ""
 
 def get_test_solution(day, part):

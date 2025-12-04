@@ -88,6 +88,7 @@ class Solver(advent.Advent):
 """,
         filename_prefix + "test_data": api.get_test_data(day),
         filename_prefix + "input_data": api.get_input(day),
+        filename_prefix + "test_solution_1": api.get_test_solution(day, 1),
     }
     for filename, default_content in filenames.items():
         if pathlib.Path(filename).is_file():
@@ -114,7 +115,7 @@ class Solver(advent.Advent):
 def create():
     day = _get_day_from_args()
     if day is None:
-        for day in range(1, 26):
+        for day in range(1, MAX_DAYS + 1):
             _create_day(str(day), skip_overwrite=True)
         return
     try:
