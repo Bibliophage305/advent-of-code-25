@@ -21,17 +21,7 @@ class Solver(advent.Advent):
         return total
 
     def part_1(self, data):
-        total = 0
-        for start, end in data:
-            for i in range(start, end + 1):
-                s = str(i)
-                l = len(s)
-                if l % 2 != 0:
-                    continue
-                if s[: l // 2] == s[l // 2 :]:
-                    total += i
-        return total
+        return self.count_bad_ids(data, lambda l: (l + 1) // 2)
 
     def part_2(self, data):
-        min_chunk_size = lambda x: 1
-        return self.count_bad_ids(data, min_chunk_size)
+        return self.count_bad_ids(data, lambda _: 1)
