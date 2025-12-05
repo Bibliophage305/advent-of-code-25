@@ -1,131 +1,211 @@
 import os
-import requests
-from datetime import datetime
-from dotenv import load_dotenv
-from bs4 import BeautifulSoup
 import re
+from datetime import datetime
+from typing import Optional
+
+import requests
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 
 load_dotenv()
 
-YEAR = os.getenv("YEAR", datetime.now().year)
+YEAR = int(os.getenv("YEAR", datetime.now().year))
+TOKEN = os.getenv("TOKEN")
 
 
-def _fetch_url(day, parts, method="GET", data=None):
-    if not os.getenv("TOKEN"):
-        raise ValueError("No token found. Please set the TOKEN environment variable")
-    url = f"https://adventofcode.com/{int(YEAR)}/day/{day}"
-    for part in parts:
-        url += f"/{part}"
-    headers = {"Cookie": f"session={os.getenv('TOKEN')}"}
-    if method == "GET":
-        return requests.get(url, headers=headers)
-    elif method == "POST":
-        if data is None:
-            data = {}
-        return requests.post(url, headers=headers, data=data)
-    else:
-        raise ValueError("Unsupported HTTP method")
+# ----------------------------------------------------------------------
+# Utility: HTTP Fetching
+# ----------------------------------------------------------------------
 
 
-def _get_html_content(day):
-    return _fetch_url(day, []).text
+class AOCRequestError(RuntimeError):
+    """Raised when Advent of Code HTTP requests fail."""
 
 
-def get_input(day):
-    response = _fetch_url(day, ["input"])
+def _session_cookie() -> dict[str, str]:
+    if not TOKEN:
+        raise ValueError("Missing TOKEN environment variable (session ID).")
+    return {"Cookie": f"session={TOKEN}"}
 
-    if response.status_code == 200:
-        return response.text.strip()
-    else:
-        print(
-            f"Failed to retrieve input for day {day}. Status code: {response.status_code}"
+
+def _aoc_url(day: int, *parts: str) -> str:
+    path = "/".join(parts)
+    if path:
+        return f"https://adventofcode.com/{YEAR}/day/{day}/{path}"
+    return f"https://adventofcode.com/{YEAR}/day/{day}"
+
+
+def _fetch(
+    day: int, *parts: str, method: str = "GET", data: Optional[dict] = None
+) -> str:
+    """
+    Fetches a page from adventofcode.com and returns its text content.
+    Raises AOCRequestError on failure.
+    """
+    url = _aoc_url(day, *parts)
+    headers = _session_cookie()
+
+    try:
+        response = (
+            requests.get(url, headers=headers)
+            if method == "GET"
+            else requests.post(url, headers=headers, data=data or {})
         )
-        return ""
+    except requests.RequestException as exc:
+        raise AOCRequestError(f"Network error fetching {url}") from exc
 
-
-def get_test_data(day):
-    soup = BeautifulSoup(_get_html_content(day), "html.parser")
-    article = soup.find("article")
-    largest_code_tag = max(
-        article.find_all("code"), key=lambda tag: len(tag.get_text())
-    )
-    return largest_code_tag.get_text().strip() if largest_code_tag else ""
-
-
-def get_test_solution(day, part):
-    if part not in [1, 2]:
-        raise ValueError("Part must be 1 or 2")
-    soup = BeautifulSoup(_get_html_content(day), "html.parser")
-    articles = soup.find_all("article")
-    if part > len(articles):
-        print(
-            f"No test solution found for part {part} yet, have you completed the previous part?"
-        )
-        return ""
-    code_tags = articles[part - 1].find_all("code")
-    for code_tag in reversed(code_tags):
-        if code_tag.em and code_tag.em.string:
-            return code_tag.em.string.strip()
-    em_tags = articles[part - 1].find_all("em")
-    for em_tag in reversed(em_tags):
-        if em_tag.code and em_tag.code.string:
-            return em_tag.code.string.strip()
-    print(f"No test solution found for part {part}")
-    return ""
-
-
-def number_of_parts_solved(day):
-    soup = BeautifulSoup(_get_html_content(day), "html.parser")
-    submission_form = soup.find("form", {"action": f"{day}/answer"})
-    if submission_form is None:
-        return 2
-    input_level_element = submission_form.find("input", {"name": "level"})
-    if input_level_element is None:
-        raise ValueError("Could not find level input in submission form")
-    level = input_level_element.get("value")
-    return int(level) - 1
-
-
-def submit_solution(day, level, solution):
-    if level not in [1, 2]:
-        raise ValueError("Level must be 1 or 2")
-    if number_of_parts_solved(day) >= level:
-        print(f"Part {level} for day {day} has already been solved.")
-        return
-    payload = {"level": level, "answer": solution}
-    response = _fetch_url(day, ["answer"], method="POST", data=payload)
     if response.status_code != 200:
-        print(
-            f"Failed to submit solution for day {day}. Status code: {response.status_code}"
-        )
-        return
-    soup = BeautifulSoup(response.text, "html.parser")
-    message_text = soup.find("article").find("p").get_text()
-    if message_text.startswith("You gave an answer too recently"):
-        timeout_remaining = re.search(r"(?<=You have ).+(?= left)", message_text)
-        timeout_message = timeout_remaining.group(0) if timeout_remaining else "a while"
-        print(
-            f"Currently in a cooldown period. Please wait {timeout_message} before trying again."
-        )
-        return
-    elif message_text.startswith("That's not the right answer"):
-        timeout_remaining = re.search(
-            r"(?<=lease wait ).+(?= before trying again)", message_text
-        )
-        timeout_message = timeout_remaining.group(0) if timeout_remaining else "a while"
-        print(f"Incorrect solution. Please wait {timeout_message} before trying again.")
-        return
-    elif message_text.startswith("That's the right answer!"):
-        print(f"Correct! Solution for day {day}, part {level} successfully submitted.")
-        return
-    elif message_text.startswith("You don't seem to be solving the right level"):
-        print(f"Part {level} for day {day} has already been solved.")
-        return
-    print("Unexpected response when submitting solution:")
-    print(response.text)
+        raise AOCRequestError(f"HTTP {response.status_code} when fetching {url}")
+
+    return response.text
 
 
-if __name__ == "__main__":
-    day = 4
-    part = 2
-    print(get_test_solution(day, part))
+def _get_day_html(day: int) -> BeautifulSoup:
+    return BeautifulSoup(_fetch(day), "html.parser")
+
+
+# ----------------------------------------------------------------------
+# Input Fetching
+# ----------------------------------------------------------------------
+
+
+def get_input(day: int) -> str:
+    """Returns the puzzle input for a given day."""
+    try:
+        text = _fetch(day, "input")
+        return text.strip()
+    except AOCRequestError as exc:
+        print(exc)
+        return ""
+
+
+def get_test_data(day: int) -> str:
+    """Extracts the largest <code> block from the first article."""
+    soup = _get_day_html(day)
+    article = soup.find("article")
+    if not article:
+        return ""
+
+    code_blocks = article.find_all("code")
+    if not code_blocks:
+        return ""
+
+    largest = max(code_blocks, key=lambda c: len(c.get_text()))
+    return largest.get_text().strip()
+
+
+# ----------------------------------------------------------------------
+# Test Solutions
+# ----------------------------------------------------------------------
+
+
+def _extract_test_solution(article: BeautifulSoup) -> Optional[str]:
+    """
+    Extract result in <em> or <code> blocks, checking common AOC patterns.
+    """
+    # Examples often highlight answers like: <code><em>42</em></code>
+    for tag in reversed(article.find_all("code")):
+        em = tag.find("em")
+        if em and em.string:
+            return em.string.strip()
+
+    # Fallback patterns
+    for em in reversed(article.find_all("em")):
+        code = em.find("code")
+        if code and code.string:
+            return code.string.strip()
+
+    return None
+
+
+def get_test_solution(day: int, part: int) -> str:
+    """Returns the example output for part 1 or 2 (if available)."""
+    if part not in (1, 2):
+        raise ValueError("Part must be 1 or 2")
+
+    soup = _get_day_html(day)
+    articles = soup.find_all("article")
+
+    if part > len(articles):
+        print(f"No article yet for part {part}")
+        return ""
+
+    solution = _extract_test_solution(articles[part - 1])
+    if not solution:
+        print(f"No test solution found for part {part}")
+        return ""
+
+    return solution
+
+
+# ----------------------------------------------------------------------
+# Submission Tracking
+# ----------------------------------------------------------------------
+
+
+def number_of_parts_solved(day: int) -> int:
+    """
+    Returns:
+        0 → none solved
+        1 → part 1 solved
+        2 → both solved
+    """
+    soup = _get_day_html(day)
+
+    form = soup.find("form", action=f"{day}/answer")
+    if not form:
+        return 2  # both solved
+
+    level_input = form.find("input", {"name": "level"})
+    if not level_input:
+        raise ValueError("Could not find submission level in HTML.")
+
+    # AOC uses level=1 for "about to submit part 1", so solved = level - 1
+    return int(level_input.get("value")) - 1
+
+
+# ----------------------------------------------------------------------
+# Submission
+# ----------------------------------------------------------------------
+
+
+def _parse_submission_feedback(text: str) -> str:
+    """
+    Returns a human-readable message summarizing the submission result.
+    """
+    if "You gave an answer too recently" in text:
+        time_left = re.search(r"You have (.+?) left", text)
+        return f"Cooldown active. Wait {time_left.group(1) if time_left else 'a bit'}."
+
+    if "That's not the right answer" in text:
+        wait = re.search(r"lease wait (.+?) before trying again", text)
+        return f"Incorrect answer. Wait {wait.group(1) if wait else 'a bit'}."
+
+    if "That's the right answer" in text:
+        return "Correct answer!"
+
+    if "You don't seem to be solving the right level" in text:
+        return "This part was already solved."
+
+    return f"Unexpected submission response:\n{text}"
+
+
+def submit_solution(day: int, level: int, answer: int | str) -> None:
+    if level not in (1, 2):
+        raise ValueError("Level must be 1 or 2")
+
+    if number_of_parts_solved(day) >= level:
+        print(f"Day {day} part {level} already solved.")
+        return
+
+    html = _fetch(day, "answer", method="POST", data={"level": level, "answer": answer})
+    soup = BeautifulSoup(html, "html.parser")
+    article = soup.find("article")
+
+    if not article:
+        print("Unexpected submission output.")
+        print(html)
+        return
+
+    message = _parse_submission_feedback(article.get_text())
+    print(message)

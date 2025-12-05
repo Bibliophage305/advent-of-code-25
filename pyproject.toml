@@ -6,12 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.14.3",
-    "dotenv>=0.9.9",
-    "pytz>=2025.2",
+    "python-dotenv>=1.2.1",
     "requests>=2.32.5",
     "taskipy>=1.14.1",
 ]
 
 [tool.taskipy.tasks]
-create = "python3 advent_of_code/create.py"
-day = "python3 advent_of_code/run.py"
+create = "uv run advent_of_code/create.py"
+day = "uv run advent_of_code/run.py"

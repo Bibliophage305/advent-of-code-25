@@ -1,4 +1,5 @@
 from itertools import product
+
 import advent
 
 
@@ -7,7 +8,7 @@ class Solver(advent.Advent):
         return [
             {
                 p
-                for p in product(range(len(data)), range(len(data[0].strip())))
+                for p in product(range(len(data)), range(len(data[0])))
                 if data[p[0]][p[1]] == "@"
             }
         ]

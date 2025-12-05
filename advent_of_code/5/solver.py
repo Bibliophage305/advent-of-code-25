@@ -6,13 +6,13 @@ class Solver(advent.Advent):
         ranges, ingredients = [], []
         in_ranges = True
         for line in data:
-            if not line.strip():
+            if not line:
                 in_ranges = False
                 continue
             if in_ranges:
-                ranges.append(list(map(int, line.strip().split("-"))))
+                ranges.append(list(map(int, line.split("-"))))
             else:
-                ingredients.append(int(line.strip()))
+                ingredients.append(int(line))
         ranges.sort()
         merged_ranges = []
         for start, end in ranges:

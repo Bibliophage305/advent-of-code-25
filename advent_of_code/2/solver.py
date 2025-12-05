@@ -3,12 +3,7 @@ import advent
 
 class Solver(advent.Advent):
     def process_data(self, data):
-        return [
-            [
-                list(map(int, s.split("-")))
-                for s in "".join(x.strip() for x in data).split(",")
-            ]
-        ]
+        return [[list(map(int, s.split("-"))) for s in "".join(data).split(",")]]
 
     def count_bad_ids(self, data, min_chunk_size):
         total = 0

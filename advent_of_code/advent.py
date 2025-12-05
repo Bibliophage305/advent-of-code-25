@@ -1,107 +1,166 @@
+from pathlib import Path
+
 import api
 
 
 class Advent:
+    """
+    Base class for Advent of Code solution runners.
 
-    test_data_paths = ["test_data", "test_data"]
+    Subclass this for each day. Implement:
+        - process_data(self, raw_lines)
+        - part_1(self, *data)
+        - part_2(self, *data)
+    """
 
-    def __init__(self, day):
-        self.day = day
+    test_data_paths = ("test_data", "test_data")
 
-    def process_data(self, data):
-        return [data]
+    def __init__(self, day: int):
+        self.day = int(day)
+        self.base_path = Path("advent_of_code") / str(self.day)
 
-    def part_1(self, *data):
-        raise NotImplementedError
+    # ----------------------------------------------------------------------
+    # Data helpers
+    # ----------------------------------------------------------------------
 
-    def part_2(self, *data):
-        raise NotImplementedError
+    def process_data(self, lines: list[str]):
+        """Override in subclasses. Default: return a single argument = raw line list."""
+        return [lines]
 
-    def _read_data(self, filename):
-        with open(filename, "r") as f:
-            return f.readlines()
-
-    def _get_data(self, filename):
+    def _read_lines(self, filename: str) -> list[str]:
+        path = self.base_path / filename
         try:
-            data = self._read_data(filename)
-        except FileNotFoundError as e:
-            raise FileNotFoundError(f"The file {filename} doesn't exist") from e
-        return self.process_data(data)
-    
-    def _get_test_solution(self, part):
-        filename = f"advent_of_code/{self.day}/test_solution_{part}"
-        try:
-            with open(filename, "r") as f:
-                content = f.read().strip()
-                if not content:
-                    raise ValueError(f"Test solution file {filename} is empty")
-                return int(content)
-        except FileNotFoundError as e:
-            try:
-                test_solution = api.get_test_solution(int(self.day), part)
-                with open(filename, "w") as f:
-                    f.write(str(test_solution))
-                return int(test_solution)
-            except Exception as e2:
-                raise FileNotFoundError(
-                    f"Test solution file {filename} doesn't exist and could not be retrieved from the API"
-                ) from e2
-        except ValueError as e:
-            raise ValueError(f"Test solution in file {filename} is not a valid integer") from e
+            return path.read_text().splitlines()
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"Missing required file: {path}") from exc
 
-    def _run_test(self, part):
-        f = getattr(self, f"part_{part}")
-        expected_solution = self._get_test_solution(part)
-        data = self._get_data(
-            f"advent_of_code/{self.day}/{self.test_data_paths[part-1]}"
+    def _write_text(self, filename: str, content: str) -> None:
+        (self.base_path / filename).write_text(content)
+
+    def _load_data(self, filename: str):
+        return self.process_data(self._read_lines(filename))
+
+    # Generic pattern: load local file or fetch via API
+    def _load_or_fetch(self, filename: str, fetch_fn, *, description: str):
+        try:
+            return self._read_lines(filename)
+        except FileNotFoundError:
+            pass
+
+        # Fetch missing file
+        try:
+            content = fetch_fn()
+        except Exception as exc:
+            raise FileNotFoundError(
+                f"Could not load {description} from file or API."
+            ) from exc
+
+        self._write_text(filename, content)
+        return content.splitlines()
+
+    # ----------------------------------------------------------------------
+    # Specific loaders
+    # ----------------------------------------------------------------------
+
+    def _load_input_data(self):
+        lines = self._load_or_fetch(
+            "input_data",
+            lambda: api.get_input(self.day),
+            description="input data",
         )
-        if not expected_solution:
-            raise AssertionError(
-                f"Test for part {part} failed\nExpected solution cannot be empty"
-            )
+        return self.process_data(lines)
+
+    def _load_test_data(self, part: int):
+        filename = self.test_data_paths[part - 1]
+        lines = self._load_or_fetch(
+            filename,
+            lambda: api.get_test_data(self.day),
+            description=f"test data for part {part}",
+        )
+        return self.process_data(lines)
+
+    def _load_test_solution(self, part: int) -> int:
+        filename = f"test_solution_{part}"
+
+        # Try local file
         try:
-            solution = f(*data)
-        except NotImplementedError as e:
-            raise NotImplementedError(
-                f"Solution function for part {part} is not implemented"
-            ) from e
-        if solution is None:
+            lines = self._read_lines(filename)
+            if len(lines) != 1:
+                raise ValueError(
+                    f"{filename} must contain exactly one line, got {len(lines)}."
+                )
+            return int(lines[0].strip())
+        except FileNotFoundError:
+            pass
+
+        # Fetch via API
+        try:
+            solution = api.get_test_solution(self.day, part)
+        except Exception as exc:
+            raise FileNotFoundError(
+                f"Could not load test solution for part {part}."
+            ) from exc
+
+        self._write_text(filename, str(solution))
+        return int(solution)
+
+    # ----------------------------------------------------------------------
+    # Running tests and solutions
+    # ----------------------------------------------------------------------
+
+    def _run_test(self, part: int) -> None:
+        part_fn = getattr(self, f"part_{part}")
+        expected = self._load_test_solution(part)
+        data = self._load_test_data(part)
+
+        try:
+            result = part_fn(*data)
+        except NotImplementedError:
+            raise NotImplementedError(f"part_{part} is not implemented.")
+
+        if result is None:
+            raise AssertionError(f"part_{part} returned None.")
+        if result != expected:
             raise AssertionError(
-                f"Test for part {part} failed\nAnswer returned None, is the function implemented?"
-            )
-        if solution != expected_solution:
-            raise AssertionError(
-                f"Test for part {part} failed\nExpected {expected_solution}, got {solution}"
+                f"Test for part {part} failed: expected {expected}, got {result}"
             )
 
-    def _run_solution(self, part):
-        data = self._get_data(f"advent_of_code/{self.day}/input_data")
+    def _run_part(self, part: int):
+        data = self._load_input_data()
         return getattr(self, f"part_{part}")(*data)
 
     def run(self):
         try:
-            levels_solved = api.number_of_parts_solved(self.day)
-            attempt_submit = True
-        except Exception as e:
-            attempt_submit = False
+            solved = api.number_of_parts_solved(self.day)
+            can_submit = True
+        except Exception:
+            solved = 0
+            can_submit = False
 
         for part in (1, 2):
+            # Test
             try:
                 self._run_test(part)
-            except AssertionError as e:
-                print(e)
+            except AssertionError as exc:
+                print(exc)
                 return
-            except Exception as e:
-                raise Exception(f"Failed when running tests for part {part}") from e
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Unexpected error during testing part {part}"
+                ) from exc
+
+            # Solve
             try:
-                solution = self._run_solution(part)
-                print(f"Part {part}: {solution}")
-                if attempt_submit and levels_solved < part:
-                    try:
-                        api.submit_solution(self.day, part, solution)
-                    except Exception as e:
-                        raise Exception(
-                            f"Could not submit solution for part {part}"
-                        ) from e
-            except Exception as e:
-                raise Exception(f"Could not run part {part}") from e
+                answer = self._run_part(part)
+                print(f"Part {part}: {answer}")
+            except Exception as exc:
+                raise RuntimeError(f"Could not run part {part}") from exc
+
+            # Submit
+            if can_submit and solved < part:
+                try:
+                    api.submit_solution(self.day, part, answer)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Failed to submit solution for part {part}"
+                    ) from exc

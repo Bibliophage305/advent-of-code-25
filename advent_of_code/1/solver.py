@@ -1,15 +1,11 @@
+from itertools import accumulate, chain
+
 import advent
-from itertools import chain, accumulate
 
 
 class Solver(advent.Advent):
     def process_data(self, data):
-        return [
-            [
-                int(x.strip()[1:]) if x.strip()[0] == "R" else -int(x.strip()[1:])
-                for x in data
-            ]
-        ]
+        return [[int(x[1:]) if x[0] == "R" else -int(x[1:]) for x in data]]
 
     def zero_count(self, steps):
         return sum(x % 100 == 0 for x in accumulate(steps, initial=50))
