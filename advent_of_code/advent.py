@@ -27,13 +27,31 @@ class Advent:
         except FileNotFoundError as e:
             raise FileNotFoundError(f"The file {filename} doesn't exist") from e
         return self.process_data(data)
+    
+    def _get_test_solution(self, part):
+        filename = f"advent_of_code/{self.day}/test_solution_{part}"
+        try:
+            with open(filename, "r") as f:
+                content = f.read().strip()
+                if not content:
+                    raise ValueError(f"Test solution file {filename} is empty")
+                return int(content)
+        except FileNotFoundError as e:
+            try:
+                test_solution = api.get_test_solution(int(self.day), part)
+                with open(filename, "w") as f:
+                    f.write(str(test_solution))
+                return int(test_solution)
+            except Exception as e2:
+                raise FileNotFoundError(
+                    f"Test solution file {filename} doesn't exist and could not be retrieved from the API"
+                ) from e2
+        except ValueError as e:
+            raise ValueError(f"Test solution in file {filename} is not a valid integer") from e
 
     def _run_test(self, part):
         f = getattr(self, f"part_{part}")
-        with open(
-            f"advent_of_code/{self.day}/test_solution_{part}", "r"
-        ) as test_solution_file:
-            expected_solution = int(test_solution_file.read().strip())
+        expected_solution = self._get_test_solution(part)
         data = self._get_data(
             f"advent_of_code/{self.day}/{self.test_data_paths[part-1]}"
         )

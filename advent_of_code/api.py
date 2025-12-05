@@ -66,6 +66,11 @@ def get_test_solution(day, part):
     for code_tag in reversed(code_tags):
         if code_tag.em and code_tag.em.string:
             return code_tag.em.string.strip()
+    em_tags = articles[part - 1].find_all("em")
+    for em_tag in reversed(em_tags):
+        if em_tag.code and em_tag.code.string:
+            return em_tag.code.string.strip()
+    print(f"No test solution found for part {part}")
     return ""
 
 

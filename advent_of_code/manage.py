@@ -73,7 +73,7 @@ def _create_day(day, skip_overwrite=False):
     pathlib.Path(filename_prefix).mkdir(parents=True, exist_ok=True)
     filenames = {
         filename_prefix
-        + "solver.py": f"""from advent_of_code import advent
+        + "solver.py": f"""import advent
 
 
 class Solver(advent.Advent):
@@ -126,19 +126,6 @@ def _run_day(day):
     except ModuleNotFoundError as e:
         print(f"Day {day} hasn't been created yet")
         return
-    parts_solved = api.number_of_parts_solved(int(day))
-    for part in (1, 2):
-        if part == 2 and parts_solved == 0:
-            continue
-        filename = f"advent_of_code/{day}/test_solution_{part}"
-        if os.path.isfile(filename):
-            with open(filename, "r") as f:
-                content = f.read().strip()
-                if content:
-                    continue
-        with open(filename, "w") as f:
-            test_solution = api.get_test_solution(int(day), part)
-            f.write(str(test_solution))
     s = module.Solver(day)
     s.run()
 
