@@ -1,3 +1,5 @@
+from functools import cache
+
 import advent
 
 
@@ -6,16 +8,23 @@ class Solver(advent.Advent):
         return [[list(map(int, s.split("-"))) for s in "".join(data).split(",")]]
 
     def count_bad_ids(self, data, min_chunk_size):
+        @cache
+        def valid_chunk_sizes(l):
+            return [
+                size for size in range(min_chunk_size(l), l // 2 + 1) if l % size == 0
+            ]
+
         total = 0
         for start, end in data:
             for i in range(start, end + 1):
                 s = str(i)
                 l = len(s)
-                for chunk_size in range(min_chunk_size(l), l // 2 + 1):
-                    if l % chunk_size != 0:
-                        continue
-                    chunks = {s[j : j + chunk_size] for j in range(0, l, chunk_size)}
-                    if len(chunks) == 1:
+                for chunk_size in valid_chunk_sizes(l):
+                    first_chunk = s[:chunk_size]
+                    for j in range(chunk_size, l, chunk_size):
+                        if s[j : j + chunk_size] != first_chunk:
+                            break
+                    else:
                         total += i
                         break
         return total
