@@ -73,7 +73,7 @@ def get_input(day: int) -> str:
     """Returns the puzzle input for a given day."""
     try:
         text = _fetch(day, "input")
-        return text.strip()
+        return text.strip("\n")
     except AOCRequestError as exc:
         print(exc)
         return ""
