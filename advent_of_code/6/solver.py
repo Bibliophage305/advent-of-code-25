@@ -1,29 +1,20 @@
-from functools import reduce
-from operator import add, mul
+from math import prod
 
 import advent
 
 
 class Solver(advent.Advent):
     def process_data(self, data):
+        split_points = [i - 1 for i, x in enumerate(data[-1]) if not x.isspace()]
         operators = data.pop().strip().split()
-        split_points = (
-            [-1]
-            + [
-                i
-                for i in range(len(data[0]))
-                if all(line[i].isspace() for line in data)
-            ]
-            + [len(data[0])]
-        )
         numbers = [
             [line[l + 1 : r] for line in data]
-            for l, r in zip(split_points, split_points[1:])
+            for l, r in zip(split_points, split_points[1:] + [len(data[0])])
         ]
         return numbers, operators
 
     def numbers_and_operator(self, numbers, operator):
-        return reduce({"+": add, "*": mul}[operator], numbers)
+        return sum(numbers) if operator == "+" else prod(numbers)
 
     def part_1(self, numbers, operators):
         return sum(
