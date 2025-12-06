@@ -1,3 +1,6 @@
+from functools import reduce
+from operator import mul
+
 import advent
 
 
@@ -5,37 +8,25 @@ class Solver(advent.Advent):
     def process_data(self, data):
         return [data]
 
+    def numbers_and_operator(self, numbers, operator):
+        return sum(numbers) if operator == "+" else reduce(mul, numbers, 1)
+
     def part_1(self, data):
         problems = list(zip(*(x.split() for x in data)))
-        total = 0
-        for problem in problems:
-            numbers, operator = problem[:-1], problem[-1]
-            if operator == "+":
-                total += sum(int(x) for x in numbers)
-            elif operator == "*":
-                prod = 1
-                for x in numbers:
-                    prod *= int(x)
-                total += prod
-        return total
+        return sum(
+            self.numbers_and_operator(map(int, problem[:-1]), problem[-1])
+            for problem in problems
+        )
 
     def part_2(self, data):
-        line_length = max(map(len, data))
-        data = [x.ljust(line_length) for x in data]
-        operator, numbers = "+", [0]
-        total = 0
-        for line in [[x.strip() for x in line] for line in zip(*data)] + [["+"]]:
+        numbers, operators = [], []
+        for line in [[x.strip() for x in line] for line in zip(*data)]:
             operator_candidate = line.pop()
             if operator_candidate:
-                if operator == "+":
-                    total += sum(numbers)
-                elif operator == "*":
-                    prod = 1
-                    for x in numbers:
-                        prod *= x
-                    total += prod
-                numbers = []
-                operator = operator_candidate
+                operators.append(operator_candidate)
+                numbers.append([])
             if any(line):
-                numbers.append(int("".join(line).strip()))
-        return total
+                numbers[-1].append(int("".join(line).strip()))
+        return sum(
+            self.numbers_and_operator(nums, op) for nums, op in zip(numbers, operators)
+        )
