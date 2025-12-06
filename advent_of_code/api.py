@@ -91,7 +91,7 @@ def get_test_data(day: int) -> str:
         return ""
 
     largest = max(code_blocks, key=lambda c: len(c.get_text()))
-    return largest.get_text().strip()
+    return largest.get_text().strip("\n")
 
 
 # ----------------------------------------------------------------------
