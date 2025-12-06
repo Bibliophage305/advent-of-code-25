@@ -1,32 +1,38 @@
 from functools import reduce
-from operator import mul
+from operator import add, mul
 
 import advent
 
 
 class Solver(advent.Advent):
     def process_data(self, data):
-        return [data]
+        operators = data.pop().strip().split()
+        split_points = (
+            [-1]
+            + [
+                i
+                for i in range(len(data[0]))
+                if all(line[i].isspace() for line in data)
+            ]
+            + [len(data[0])]
+        )
+        numbers = [
+            [line[l + 1 : r] for line in data]
+            for l, r in zip(split_points, split_points[1:])
+        ]
+        return numbers, operators
 
     def numbers_and_operator(self, numbers, operator):
-        return sum(numbers) if operator == "+" else reduce(mul, numbers, 1)
+        return reduce({"+": add, "*": mul}[operator], numbers)
 
-    def part_1(self, data):
-        problems = list(zip(*(x.split() for x in data)))
+    def part_1(self, numbers, operators):
         return sum(
-            self.numbers_and_operator(map(int, problem[:-1]), problem[-1])
-            for problem in problems
+            self.numbers_and_operator(map(int, num), op)
+            for num, op in zip(numbers, operators)
         )
 
-    def part_2(self, data):
-        numbers, operators = [], []
-        for line in [[x.strip() for x in line] for line in zip(*data)]:
-            operator_candidate = line.pop()
-            if operator_candidate:
-                operators.append(operator_candidate)
-                numbers.append([])
-            if any(line):
-                numbers[-1].append(int("".join(line).strip()))
+    def part_2(self, numbers, operators):
         return sum(
-            self.numbers_and_operator(nums, op) for nums, op in zip(numbers, operators)
+            self.numbers_and_operator(map(lambda x: int("".join(x)), zip(*num)), op)
+            for num, op in zip(numbers, operators)
         )
